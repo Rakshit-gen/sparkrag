@@ -44,6 +44,9 @@ def load_documents(spark: SparkSession, input_dir: str) -> DataFrame:
     don't serialize well), but the resulting rows are spread across
     partitions before any of the expensive chunking or embedding work.
     """
+    if not os.path.isdir(input_dir):
+        raise ValueError(f"Input path does not exist or is not a directory: {input_dir}")
+
     rows = []
     for path in find_documents(input_dir):
         text = read_file(path).strip()
