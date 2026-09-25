@@ -23,8 +23,12 @@ ingestion side scales the same way if you point it at a cluster later.
 
 ## Setup
 
+Use Python 3.11. PySpark's cloudpickle does not handle 3.13+ correctly yet
+(you'll get a pickling RecursionError on `createDataFrame`), so newer
+interpreters won't work here.
+
 ```bash
-python3 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
