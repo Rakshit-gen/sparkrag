@@ -58,6 +58,21 @@ The embedding step in particular is the expensive part, so `embedder.py`
 loads the model once per partition and reuses it for every row in that
 partition instead of reloading it per document.
 
+## Troubleshooting
+
+**`PicklingError` / `RecursionError` on `createDataFrame`**: you're on
+Python 3.13+. Use 3.11.
+
+**`sun.misc.Unsafe ... not available`**: this only comes up if you switch
+the embedder back to a `pandas_udf`. Arrow's direct memory access breaks
+under JDK 17+ without JVM `--add-opens` flags that aren't worth the
+trouble for a local pipeline, which is why `embedder.py` uses a plain UDF
+instead.
+
+**`ModuleNotFoundError: No module named 'sparkrag'` from a Spark worker**:
+you skipped `pip install -e .`. Spark workers import your code by name,
+they don't inherit the driver's `sys.path`.
+
 ## Layout
 
 ```
