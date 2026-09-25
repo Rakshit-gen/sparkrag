@@ -1,3 +1,7 @@
+import os
+
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
