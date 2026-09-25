@@ -1,5 +1,9 @@
 import argparse
+import logging
 import sys
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("sparkrag")
 
 
 def main() -> None:
@@ -18,16 +22,27 @@ def main() -> None:
     if args.command == "ingest":
         from sparkrag.ingest import run_ingest
 
-        count = run_ingest(args.input)
-        print(f"ingested {count} chunks from {args.input}")
+        try:
+            count = run_ingest(args.input)
+        except ValueError as e:
+            # common user mistake: bad or empty --input path, no need for a
+            # spark stack trace on top of it
+            logger.error(str(e))
+            sys.exit(1)
+
+        logger.info("ingested %d chunks from %s", count, args.input)
     elif args.command == "query":
         from sparkrag.chain import ask
 
         try:
-            print(ask(args.question, k=args.k))
+            answer = ask(args.question, k=args.k)
         except RuntimeError as e:
-            print(str(e), file=sys.stderr)
+            logger.error(str(e))
             sys.exit(1)
+
+        # the answer itself stays plain stdout, not a log line, so it can
+        # still be piped or redirected cleanly
+        print(answer)
 
 
 if __name__ == "__main__":
