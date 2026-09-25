@@ -2,6 +2,14 @@ import os
 
 os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
+# chromadb pulls in onnxruntime even though we never use its default
+# embedding function (we bring our own via sentence-transformers). On
+# macOS, onnxruntime's telemetry worker thread can SIGABRT during
+# interpreter shutdown unless this is set before onnxruntime is imported,
+# which otherwise shows up as a spurious crash report after a process that
+# only ever imported chromadb has already finished successfully.
+os.environ.setdefault("ORT_DISABLE_TELEMETRY_EVENTS", "1")
+
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
