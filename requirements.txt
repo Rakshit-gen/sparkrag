@@ -1,4 +1,6 @@
 pyspark==3.5.3
+pandas==2.2.3
+pyarrow==18.1.0
 langchain==0.3.7
 langchain-text-splitters==0.3.2
 langchain-groq==0.2.1
