@@ -73,6 +73,52 @@ instead.
 you skipped `pip install -e .`. Spark workers import your code by name,
 they don't inherit the driver's `sys.path`.
 
+## Production considerations
+
+This is a working pipeline, not a toy demo, but "production" covers a lot of
+ground. Here's what's actually handled and what isn't.
+
+**Handled:**
+
+- **Docker**: a `Dockerfile` builds a python:3.11-slim image with
+  openjdk-17-jre-headless installed for pyspark, `JAVA_HOME` set correctly,
+  and the package installed editable so the entrypoint runs `sparkrag.cli`.
+- **CI**: `.github/workflows/ci.yml` runs the test suite on every push and
+  pull request, with Python 3.11 and a Temurin JDK set up so the Spark-based
+  tests actually run instead of failing on a missing `JAVA_HOME`.
+- **Structured logging**: `cli.py` logs status (chunk counts, errors) through
+  Python's `logging` module at INFO/ERROR instead of bare `print`, so output
+  can be filtered or shipped somewhere. The actual query answer stays on
+  plain stdout so it's still pipeable.
+- **Retries**: the Groq call in `chain.py` retries up to 3 times with
+  exponential backoff on failure. A missing API key still fails immediately,
+  it's checked before the retried call runs.
+- **Input validation**: a bad or missing `--input` directory produces a
+  one-line error, not a Spark stack trace.
+
+**Not handled, and worth knowing before you'd actually ship this:**
+
+- **Spark still runs in local mode.** `local[2]` on one machine, not a real
+  cluster. The loader/chunker/embedder code is structured so it *could* run
+  on YARN or Kubernetes with a config change, but that's untested here and
+  would need its own tuning (partition counts, executor memory, etc).
+- **No auth, anywhere.** The CLI has no concept of users. If you wrapped
+  this in an API, you'd need to add auth, rate limiting, and probably
+  per-user document isolation before letting anyone else near it.
+- **Chroma is a local, single-writer store.** Fine for one process on one
+  disk. It's not going to hold up as a shared, concurrent-write vector
+  store; a real deployment would want a hosted vector DB (Chroma's own
+  server mode, pgvector, Pinecone, etc).
+- **No secrets management.** `GROQ_API_KEY` comes from a `.env` file. That's
+  fine for local dev, not for a deployed container, which should pull it
+  from a real secrets manager or the orchestrator's secret store.
+- **No observability beyond logs.** There's no metrics, tracing, or
+  alerting on ingest failures, retry exhaustion, or latency. You'd want at
+  least basic metrics before running this unattended.
+- **The Docker build hasn't been run in this environment** (no Docker
+  available), so it's written correctly based on the actual dependencies in
+  `requirements.txt` but hasn't been build-tested end to end.
+
 ## Layout
 
 ```
