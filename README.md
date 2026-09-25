@@ -31,6 +31,7 @@ interpreters won't work here.
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e .
 cp .env.example .env
 # put your GROQ_API_KEY in .env
 ```
