@@ -1,0 +1,13 @@
+Deploy process
+
+Deploys go out through the release pipeline, not manually. Merging to main
+triggers a staging deploy automatically. Promoting to production requires
+a second approval from someone outside your team, tagged in the release
+channel.
+
+Rollbacks are one click from the deploy dashboard and take about ninety
+seconds to take effect. If a rollback does not clear the error rate within
+five minutes, page the on-call lead instead of retrying the rollback again.
+
+Freeze windows apply during the last week of each quarter. Only sev-1 fixes
+are allowed to deploy during a freeze, and they need a director sign-off.
